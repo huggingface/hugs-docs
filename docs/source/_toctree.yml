@@ -1,0 +1,34 @@
+- sections:
+    - local: index
+      title: Hugging Face Generative AI Services (HUGS)
+    - local: models
+      title: Supported Models
+    - local: hardware
+      title: Supported Hardware Providers
+    - local: help
+      title: Help & Support
+    - local: pricing
+      title: Pricing
+    - local: faq
+      title: Frequent Asked Questions (FAQ)
+  title: General
+- sections:
+    - local: how-to/docker
+      title: HUGS with Docker
+    - local: how-to/kubernetes
+      title: HUGS with Kubernetes
+    - local: how-to/cloud/aws
+      title: HUGS on AWS
+    - local: how-to/cloud/gcp
+      title: HUGS on Google Cloud
+    - local: how-to/cloud/azure
+      title: (Soon) HUGS on Azure
+    - local: how-to/digitalocean
+      title: HUGS on DigitalOcean
+  title: How to run HUGS
+- sections:
+    - local: guides/inference
+      title: Run Inference on HUGS
+    - local: guides/migrate
+      title: (Soon) Migrate from OpenAI to HUGS
+  title: Guides

@@ -1,0 +1,74 @@
+# Run Inference on HUGS
+
+HUGS, as already mentioned, is based on Text Generation Inference (TGI); meaning that running inference over a deployed HUGS container is exactly the same as for TGI. For more information, please refer to [Text Generation Inference Documentation on how to consume TGI](https://huggingface.co/docs/text-generation-inference/en/basic_tutorials/consuming_tgi).
+
+<Tip>
+
+In the inference examples show below, the host is assumed to be `localhost` which is the case when deploying HUGS via Kubernetes with port-forwarding or when deploying it with `docker run` on the current instance. If you have deployed HUGS on Kubernetes using an ingress under a specific IP, host, and/or with SSL (HTTPS), note that you should update the `localhost` references below with your host or IP.
+
+</Tip>
+
+## Messages API
+
+The Messages API is an OpenAI-compatible endpoint under `/v1/chat/completions` following the [OpenAI OpenAPI Specification](https://github.com/openai/openai-openapi). Being OpenAI-compatible implies that the inference can be run not only with `cURL` but also with both the `huggingface_hub.InferenceClient` and the `openai.OpenAI` SDK in Python, as well as any other OpenAI-compatible SDK in any programming language.
+
+### cURL
+
+Using `cURL` is pretty straight forward to [install](https://curl.se/docs/install.html) and use.
+
+```bash
+curl http://localhost:8080/v1/chat/completions \
+    -X POST \
+    -d '{"messages":[{"role":"user","content":"What is Deep Learning?"}],"temperature":0.7,"top_p":0.95,"max_tokens":128}}' \
+    -H 'Content-Type: application/json'
+```
+
+### Python
+
+As already mentioned, you can either use the `huggingface_hub.InferenceClient` from the `huggingface_hub` Python SDK (recommended), the `openai` Python SDK, or any SDK with an OpenAI-compatible interface that can consume the Messages API.
+
+#### `huggingface_hub`
+
+You can install it via pip as `pip install --upgrade --quiet huggingface_hub`, and then run the following snippet to mimic the `cURL` commands above i.e. sending requests to the Messages API:
+
+```python
+from huggingface_hub import InferenceClient
+
+client = InferenceClient(base_url="http://localhost:8080", api_key="-")
+
+chat_completion = client.chat.completions.create(
+    messages=[
+        {"role":"user","content":"What is Deep Learning?"},
+    ],
+    temperature=0.7,
+    top_p=0.95,
+    max_tokens=128,
+)
+```
+
+Read more about the [`huggingface_hub.InferenceClient.chat_completion` method](https://huggingface.co/docs/huggingface_hub/en/package_reference/inference_client#huggingface_hub.AsyncInferenceClient.chat_completion).
+
+#### `openai`
+
+Alternatively, you can also use the Messages API via `openai`; you can install it via `pip as pip install --upgrade openai`, and then run:
+
+```python
+from openai import OpenAI
+
+client = OpenAI(base_url="http://localhost:8080/v1/", api_key="-")
+
+chat_completion = client.chat.completions.create(
+    model="tgi",
+    messages=[
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "What is Deep Learning?"},
+    ],
+    temperature=0.7,
+    top_p=0.95,
+    max_tokens=128,
+)
+```
+
+## Other endpoints
+
+Besides the endpoints mentioned above, TGI also comes with other endpoints as defined in the [TGI OpenAPI Specification](https://huggingface.github.io/text-generation-inference/) that can be used not also for inference but also for tokenization, metrics, or information about the deployed model.

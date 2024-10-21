@@ -1,0 +1,65 @@
+# Docker
+
+HUGS support deployment on Docker. You can run HUGS with default settings from a command line, or customize your configuration by creating your own docker-compose.yml file.
+
+## Run HUGS with Docker
+
+To run HUGS with Docker using default settings, run this command from from your shell:
+
+```bash
+export HUGS_CACHE=~/.cache/hugs
+mkdir -p "$HUGS_CACHE"
+docker run -it --rm \
+    --gpus all \
+    --shm-size=16GB \
+    -v "$HUGS_CACHE:/tmp" \
+    -p 8080:80 \
+   'hfhugs/nvidia-google-gemma-2-9b-it'
+```
+
+<Tip>
+
+The container URI might different depending on the distribution and the model you are using.
+
+</Tip>
+
+The command sets the following default environment variables in the container:
+
+- `HUGS_CACHE` defaults to `~/.cache/hugs`. This is the cache for the models, for faster loading next time.
+
+## Sample Docker Compose file
+
+You can also use a `docker-compose.yml` file to customize your configuration.
+
+```
+version: '3.8'
+
+services:
+  hugs:
+    image: hfhugs/nvidia-google-gemma-2-9b-it
+    ports:
+      - 8080:80
+    volumes:
+      - ${HUGS_CACHE:-~/.cache/hugs}:/tmp
+    environment:
+      - HUGS_CACHE=/tmp
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    shm_size: 16GB
+    restart: on-failure:0
+
+volumes:
+  hugs_cache:
+
+```
+
+Edit the `docker-compose.yml` file to suit your needs. You can add or remove environment variables, change the port mappings. To start your HUGS instance, run this command from your shell:
+
+```bash
+docker compose up
+```
