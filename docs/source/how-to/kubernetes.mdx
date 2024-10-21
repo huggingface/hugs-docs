@@ -1,0 +1,109 @@
+# HUGS on Kubernetes
+
+HUGS (Hugging Face Generative AI Services) can be deployed on Kubernetes for scalable and manageable AI model inference. This guide will walk you through the process of deploying HUGS on a Kubernetes cluster.
+
+## Requirements
+
+- A Kubernetes Cluster (version 1.23 or later)
+- Helm version v3 or higher
+
+## HUGS Helm Chart
+
+To install the HUGS chart on your Kubernetes cluster, follow these steps:
+
+### Verify tool setup and cluster access
+
+```bash
+# Check if helm is installed
+helm version
+# Make sure `kubectl` is configured correctly and you can access the cluster
+kubectl get pods
+```
+
+### Get the Helm Chart
+
+Add the HUGS helm repo and update it:
+
+```bash
+helm repo add hugs https://raw.githubusercontent.com/huggingface/hugs-helm-chart/main/charts/hugs
+helm repo update hugs
+```
+
+Get the default `values.yaml` configuration file:
+
+```bash
+helm show values hugs/hugs > values.yaml
+```
+
+### Modify values.yaml
+
+Edit the `values.yaml` file to customize the Helm chart for your environment. Here are some key sections you might want to modify:
+
+#### Model Selection
+
+Choose the HUGS model you want to deploy. For example, to deploy the Gemma 2 9B Instruct model:
+
+```yaml
+image:
+  repository: hfhugs
+  name: nvidia-google-gemma-2-9b-it
+  tag: latest
+```
+
+> [!NOTE]
+> The container URI might differ depending on the distribution and the model you are using.
+
+#### Resource Limits
+
+Adjust the resource limits based on your cluster's capabilities and the model's requirements. For example:
+
+```yaml
+resources:
+  limits:
+    nvidia.com/gpu: 1
+  requests:
+    nvidia.com/gpu: 1
+```
+
+### Deploy (install the Helm chart)
+
+Deploy the HUGS Helm chart:
+
+```bash
+# Create a HUGS namespace
+kubectl create namespace hugs
+
+# Deploy
+helm upgrade --install \
+  "hugs" \
+  hugs/hugs \
+  --namespace "hugs" \
+  --values ./values.yaml
+```
+
+## Running Inference
+
+Once HUGS is deployed, you can run inference using the provided API. For detailed instructions, refer to [the inference guide](../guides/inference.mdx).
+
+## Troubleshooting
+
+If you encounter issues with your HUGS deployment on Kubernetes, consider the following:
+
+1. Check pod status: `kubectl get pods -n hugs`
+2. View pod logs: `kubectl logs <pod-name> -n hugs`
+3. Ensure your cluster has sufficient resources for the chosen model
+4. Verify that the correct NVIDIA drivers and CUDA versions are installed on your nodes if using GPU acceleration
+
+For more specific troubleshooting steps, consult the HUGS documentation or community forums.
+
+## Updating and Upgrading
+
+To update your HUGS deployment after the initial setup, modify your `values.yaml` file and run the `helm upgrade` command again:
+
+```bash
+helm upgrade hugs hugs/hugs --namespace hugs --values ./values.yaml
+```
+
+Always check the release notes for any breaking changes or specific upgrade instructions when moving to a new version of HUGS.
+
+By following this guide, you should be able to successfully deploy HUGS on your Kubernetes cluster and start running inference with your chosen AI models.
