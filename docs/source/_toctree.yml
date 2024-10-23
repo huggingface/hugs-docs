@@ -20,7 +20,7 @@
     - local: how-to/cloud/aws
       title: HUGS on AWS
     - local: how-to/cloud/gcp
-      title: HUGS on Google Cloud
+      title: (Soon) HUGS on Google Cloud
     - local: how-to/cloud/azure
       title: (Soon) HUGS on Azure
     - local: how-to/digitalocean
