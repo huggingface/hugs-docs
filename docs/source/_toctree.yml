@@ -17,14 +17,17 @@
       title: HUGS with Docker
     - local: how-to/kubernetes
       title: HUGS with Kubernetes
-    - local: how-to/cloud/aws
-      title: HUGS on AWS
-    - local: how-to/cloud/gcp
-      title: (Soon) HUGS on Google Cloud
-    - local: how-to/cloud/azure
-      title: (Soon) HUGS on Azure
-    - local: how-to/cloud/digital-ocean
-      title: HUGS on DigitalOcean
+    - isExpanded: true
+      sections:
+        - local: how-to/cloud/aws
+          title: HUGS on AWS
+        - local: how-to/cloud/digital-ocean
+          title: HUGS on DigitalOcean
+        - local: how-to/cloud/gcp
+          title: (Soon) HUGS on Google Cloud
+        - local: how-to/cloud/azure
+          title: (Soon) HUGS on Azure
+      title: Cloud
   title: How to run HUGS
 - sections:
     - local: guides/inference
