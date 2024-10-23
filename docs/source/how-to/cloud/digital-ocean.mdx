@@ -1,26 +1,26 @@
-# HUGS on Digital Ocean
+# HUGS on DigitalOcean
 
-The Hugging Face Generative AI Services, also known as HUGS, can be deployed in Digital Ocean (DO) via the GPU Droplets as 1-Click Models.
+The Hugging Face Generative AI Services, also known as HUGS, can be deployed in DigitalOcean (DO) via the GPU Droplets as 1-Click Models.
 
-This collaboration brings Hugging Face's extensive library of pre-trained models and their Text Generation Inference (TGI) solution to Digital Ocean customers, enabling seamless integration of state-of-the-art Large Language Models (LLMs) within the GPU Droplets of Digitial Ocean.
+This collaboration brings Hugging Face's extensive library of pre-trained models and their Text Generation Inference (TGI) solution to DigitalOcean customers, enabling seamless integration of state-of-the-art Large Language Models (LLMs) within the GPU Droplets of Digitial Ocean.
 
-HUGS provides access to a hand-picked and manually benchmarked collection of the most performant and latest open LLMs hosted in the Hugging Face Hub to TGI-optimized container applications, allowing users to deploy LLMs with a 1-Click deployment on Digital Ocean GPU Droplets.
+HUGS provides access to a hand-picked and manually benchmarked collection of the most performant and latest open LLMs hosted in the Hugging Face Hub to TGI-optimized container applications, allowing users to deploy LLMs with a 1-Click deployment on DigitalOcean GPU Droplets.
 
-With HUGS, developers can easily find, subscribe to, and deploy Hugging Face models using Digital Ocean's infrastructure, leveraging the power of NVIDIA GPUs on optimized, zero-configuration TGI containers.
+With HUGS, developers can easily find, subscribe to, and deploy Hugging Face models using DigitalOcean's infrastructure, leveraging the power of NVIDIA GPUs on optimized, zero-configuration TGI containers.
 
 ## 1-Click Deploy of HUGS in DO GPU Droplets
 
-1. Create a Digital Ocean account with a valid payment method, if you don't have one already, and make sure that you have enough quota to spin up GPU Droplets.
+1. Create a DigitalOcean account with a valid payment method, if you don't have one already, and make sure that you have enough quota to spin up GPU Droplets.
 
-2. Go to [Digital Ocean GPU Droplets](https://www.digitalocean.com/products/gpu-droplets) and create a new one.
+2. Go to [DigitalOcean GPU Droplets](https://www.digitalocean.com/products/gpu-droplets) and create a new one.
 
-![Create GPU Droplet on Digital Ocean](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/hugs/digital-ocean/create-gpu-droplet.png)
+![Create GPU Droplet on DigitalOcean](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/hugs/digital-ocean/create-gpu-droplet.png)
 
 3. Choose a data-center region (New York i.e. NYC2, or Toronto i.e. TOR1, available at the time of writing this).
 
 4. Choose the 1-Click Models when choosing an image, and select any of the available Hugging Face images that correspond to popular LLMs hosted on the Hugging Face Hub.
 
-![Choose 1-Click Models on Digital Ocean](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/hugs/digital-ocean/one-click-models.png)
+![Choose 1-Click Models on DigitalOcean](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/hugs/digital-ocean/one-click-models.png)
 
 5. Configure the remaining options, and click on "Create GPU Droplet" when done.
 
@@ -28,7 +28,7 @@ With HUGS, developers can easily find, subscribe to, and deploy Hugging Face mod
 
 Once the HUGS LLM has been deployed in a DO GPU Droplet, you can either connect to it via the public IP exposed by the instance, or just connect to it via the Web Console.
 
-![HUGS on Digital Ocean GPU Droplet](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/hugs/digital-ocean/hugs-gpu-droplet.png)
+![HUGS on DigitalOcean GPU Droplet](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/hugs/digital-ocean/hugs-gpu-droplet.png)
 
 When connected to the HUGS Droplet, the initial SSH message will display a Bearer Token, which is required to send requests to the public IP of the deployed HUGS Droplet.
 
