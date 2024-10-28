@@ -22,7 +22,7 @@ With HUGS, developers can easily find, subscribe to, and deploy Hugging Face mod
 
    ![HUGS Configuration on AWS Marketplace](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/hugs/aws/hugs-configuration.png)
 
-3. Then click `Continue to Launch`. You successfully subscribe to HUGS. You can now follow the steps below to deploy your preferred HUGS container and model using AWS EKS, with the provided container URIs.
+3. Then click `Continue to Launch`. You successfully subscribe to HUGS. You can now follow the steps below to deploy your preferred HUGS container and model using Amazon EKS, with the provided container URIs.
 
 <Tip>
 
@@ -30,9 +30,9 @@ To know whether you are subscribed or not, you can either see if a blue modal ap
 
 </Tip>
 
-## Deploy HUGS on AWS EKS
+## Deploy HUGS on Amazon EKS
 
-This example showcases how to create a Kubernetes Cluster on AWS EKS, how to create a node group with the necessary permissions and compute requirements, and how to deploy HUGS on AWS EKS using a Helm template.
+This example showcases how to create a Kubernetes Cluster on Amazon EKS, how to create a node group with the necessary permissions and compute requirements, and how to deploy HUGS on Amazon EKS using a Helm template.
 
 <Tip>
 
@@ -42,9 +42,9 @@ This example assumes that you have an AWS Account, that you have [installed and 
 
 ### Requirements
 
-Before proceeding, you need to have installed both `kubectl`, `eksctl`, and `helm`, to interact with the Kubernetes Cluster, to create, configure and delete resources on AWS EKS, and to interact with the Helm templates, respectively.
+Before proceeding, you need to have installed both `kubectl`, `eksctl`, and `helm`, to interact with the Kubernetes Cluster, to create, configure and delete resources on Amazon EKS, and to interact with the Helm templates, respectively.
 
-To install both `kubectl` and `eksctl` you can follow the instructions at [AWS EKS Documentation - Set up kubectl and eksctl](https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html). Whilst for `helm` you can follow the instructions at [Helm Documentation - Installing Helm](https://helm.sh/docs/intro/install/).
+To install both `kubectl` and `eksctl` you can follow the instructions at [Amazon EKS Documentation - Set up kubectl and eksctl](https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html). Whilst for `helm` you can follow the instructions at [Helm Documentation - Installing Helm](https://helm.sh/docs/intro/install/).
 
 Finally, for convenience the following environment variables will be set:
 
@@ -64,7 +64,7 @@ If your AWS Account has multiple profiles remember to set the `AWS_PROFILE` envi
 
 </Tip>
 
-### Setup AWS EKS
+### Setup Amazon EKS
 
 To create the EKS Cluster, Node Group, and add the necessary IAM permissions, you should run `eksctl` with the provided configuration file `eks-cluster.yaml` that looks like:
 
@@ -183,7 +183,7 @@ kubectl wait --namespace $NAMESPACE \
 
 </Tip>
 
-### Deploy HUGS with Helm on AWS EKS
+### Deploy HUGS with Helm on Amazon EKS
 
 Finally, you can install the Helm template to deploy the HUGS container with the selected model, e.g. `meta-llama/Llama-3.1-8B-Instruct`; and you need to set the container URI provided by the AWS Marketplace for your account, either via the `--set` option when running `helm install` (as shown below), or modifying its value within the [`eks-values.yaml`](https://github.com/huggingface/hugs-helm-chart/blob/main/aws/eks-values.yaml) file provided in [`huggingface/hugs-helm-chart`](https://github.com/huggingface/hugs-helm-chart).
 
@@ -249,7 +249,7 @@ And `helm uninstall` will remove all the workloads created, in this case being t
 helm uninstall aws-load-balancer-controller
 ```
 
-Alternatively, once you are done using AWS EKS Cluster, you can safely delete it to avoid incurring in unnecessary costs as:
+Alternatively, once you are done using Amazon EKS Cluster, you can safely delete it to avoid incurring in unnecessary costs as:
 
 ```bash
 eksctl delete cluster --name=$CLUSTER_NAME --region=$REGION
