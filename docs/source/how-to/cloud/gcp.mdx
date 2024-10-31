@@ -10,7 +10,7 @@ With HUGS, developers can easily find, subscribe to, and deploy Hugging Face mod
 
 ## Subscribe to HUGS on AWS Marketplace
 
-1. Go to [HUGS Google Cloud Marketplace listing](https://console.cloud.google.com/marketplace/product/huggingface-public/hugs__draft)
+1. Go to [HUGS Google Cloud Marketplace listing](https://console.cloud.google.com/marketplace/product/huggingface-public/hugs)
 
    ![HUGS on Google Cloud Marketplace](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/hugs/gcp/hugs-marketplace-listing.png)
 
@@ -47,6 +47,8 @@ When deploying HUGS on Google Cloud through the UI you can either select an exis
 * Namespace: The namespace to deploy the HUGS container and model.
 * App Instance Name: The name of the HUGS container.
 * Hugs Model Id: Select the model you want to deploy from the Hugging Face Hub. You can find all supported model [here](../models)
+* GPU Number: The number of GPUs you have available and want to use for the deployment, make sure to check the [supported model matrix](../../models) to know which model requires GPUs.
+* GPU Type: The type of GPU you have available inside your GKE cluster.
 * Reporting Service Account: The service account to use for reporting. 
 
    ![HUGS Deployment Configuration](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/hugs/gcp/hugs-deploy.png)
@@ -55,9 +57,18 @@ Next you click on `Deploy` and wait for the deployment to finish. This takes aro
 
 <Tip>
 
-If you want to better understand the different deployment options you have, e.g. 1x NVIDIA L4 GPU for Meta Llama 3.1 8B Instruct, you can checkout the [supported model matrix](../../models.mdx).
+If you want to better understand the different deployment options you have, e.g. 1x NVIDIA L4 GPU for Meta Llama 3.1 8B Instruct, you can checkout the [supported model matrix](../../models).
 
 </Tip>
+
+## Send request to the HUGS application
+
+Every HUGS application includes instructions on how to retrieve the Ingress IP address and port to send requests to the application. A HUGS deployment is a deployment of a HELM chart that includes our model container, marketplace agent (sidecar), a volume and a ingress load balancer to make the application accessible from outside the cluster.
+
+   ![HUGS Ingress](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/hugs/gcp/applicaiton-instructions.png)
+
+
+Alternatively, you can also use the Messages API via `openai`. Learn more about inference [here](../guides/inference).
 
 
 ## Create a GPU GKE Cluster for HUGS
@@ -97,7 +108,7 @@ gcloud container node-pools create gpu-pool \
     --cluster=$CLUSTER_NAME \
     --zone=$LOCATION \
     --machine-type=$MACHINE_TYPE \
-    --accelerator type=$GPU_TYPE,count=$GPU_COUNT \
+    --accelerator type=$GPU_TYPE,count=$GPU_COUNT,gpu-driver-version=default \
     --num-nodes=1 \
     --enable-autoscaling \
     --min-nodes=1 \
