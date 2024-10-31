@@ -22,7 +22,7 @@
     - local: how-to/cloud/digital-ocean
       title: HUGS on DigitalOcean
     - local: how-to/cloud/gcp
-      title: (Soon) HUGS on Google Cloud
+      title: HUGS on Google Cloud
     - local: how-to/cloud/azure
       title: (Soon) HUGS on Azure
   title: How to run HUGS
