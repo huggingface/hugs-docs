@@ -14,15 +14,15 @@ With HUGS, developers can easily find, subscribe to, and deploy Hugging Face mod
 
    ![HUGS on AWS Marketplace](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/hugs/aws/hugs-marketplace-listing.png)
 
-2. Subscribe to the product in AWS Marketplace by following the instructions on the page. At the time of writing (September 2024), the steps are to:
+2. Subscribe to the product in AWS Marketplace by following the instructions on the page. At the time of writing (October 2024), the steps are to:
 
    1. Click `Continue to Subscribe`, then go to the next page.
    2. Click `Continue to Configuration`, then go to the next page.
-   3. Select the fulfillment option & software version (HUGS Version and model you want to use) from the list.
+   3. Select the fulfillment option e.g. `open LLMs for NVIDIA GPUS`, and the software version e.g. `0.1.0`.
 
    ![HUGS Configuration on AWS Marketplace](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/hugs/aws/hugs-configuration.png)
 
-3. Then click `Continue to Launch`. You successfully subscribe to HUGS. You can now follow the steps below to deploy your preferred HUGS container and model using AWS EKS.
+3. Then click `Continue to Launch`. You successfully subscribe to HUGS. You can now follow the steps below to deploy your preferred HUGS container and model using AWS EKS, with the provided container URIs.
 
 <Tip>
 
@@ -198,6 +198,7 @@ helm install $DEPLOYMENT_NAME hugs/hugs \
     --set image.registry="XXXXXXXXXXXX.dkr.ecr.us-east-1.amazonaws.com" \
     --set image.repository="hugging-face" \
     --set image.name="nvidia-meta-llama-meta-llama-3.1-8b-instruct" \
+    --set image.tag="0.1.0" \
     --set serviceAccountName=$SERVICE_ACCOUNT_NAME \
     --set nodeSelector."eks\.amazonaws\.com/nodegroup"=$NODE_GROUP_NAME
 ```
@@ -232,7 +233,7 @@ In the inference examples in the guide below, the host is assumed to be `localho
 
 </Tip>
 
-Refer to [Run Inference on HUGS](../../guides/inference.mdx) to see how to run inference on HUGS.
+Refer to [Run Inference on HUGS](../../guides/inference) to see how to run inference on HUGS.
 
 ### Uninstall HUGS
 

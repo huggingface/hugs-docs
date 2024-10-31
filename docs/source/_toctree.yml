@@ -19,12 +19,12 @@
       title: HUGS with Kubernetes
     - local: how-to/cloud/aws
       title: HUGS on AWS
+    - local: how-to/cloud/digital-ocean
+      title: HUGS on DigitalOcean
     - local: how-to/cloud/gcp
-      title: HUGS on Google Cloud
+      title: (Soon) HUGS on Google Cloud
     - local: how-to/cloud/azure
       title: (Soon) HUGS on Azure
-    - local: how-to/digitalocean
-      title: HUGS on DigitalOcean
   title: How to run HUGS
 - sections:
     - local: guides/inference

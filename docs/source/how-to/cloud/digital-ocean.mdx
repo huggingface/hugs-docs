@@ -1,3 +1,112 @@
-# HUGS on Digital Ocean
+# HUGS on DigitalOcean
 
-TODO
+The Hugging Face Generative AI Services, also known as HUGS, can be deployed in DigitalOcean (DO) via the GPU Droplets as 1-Click Models.
+
+This collaboration brings Hugging Face's extensive library of pre-trained models and their Text Generation Inference (TGI) solution to DigitalOcean customers, enabling seamless integration of state-of-the-art Large Language Models (LLMs) within the GPU Droplets of Digitial Ocean.
+
+HUGS provides access to a hand-picked and manually benchmarked collection of the most performant and latest open LLMs hosted in the Hugging Face Hub to TGI-optimized container applications, allowing users to deploy LLMs with a 1-Click deployment on DigitalOcean GPU Droplets.
+
+With HUGS, developers can easily find, subscribe to, and deploy Hugging Face models using DigitalOcean's infrastructure, leveraging the power of NVIDIA GPUs on optimized, zero-configuration TGI containers.
+
+**More How to:**
+
+* [Deploying Hugging Face Generative AI Services on DigitalOcean GPU Droplet and Integrating with Open WebUI](https://www.digitalocean.com/community/tutorials/deploy-hugs-on-gpu-droplets-open-webui)
+
+
+## 1-Click Deploy of HUGS in DO GPU Droplets
+
+1. Create a DigitalOcean account with a valid payment method, if you don't have one already, and make sure that you have enough quota to spin up GPU Droplets.
+
+2. Go to [DigitalOcean GPU Droplets](https://www.digitalocean.com/products/gpu-droplets) and create a new one.
+
+![Create GPU Droplet on DigitalOcean](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/hugs/digital-ocean/create-gpu-droplet.png)
+
+3. Choose a data-center region (New York i.e. NYC2, or Toronto i.e. TOR1, available at the time of writing this).
+
+4. Choose the 1-Click Models when choosing an image, and select any of the available Hugging Face images that correspond to popular LLMs hosted on the Hugging Face Hub.
+
+![Choose 1-Click Models on DigitalOcean](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/hugs/digital-ocean/one-click-models.png)
+
+5. Configure the remaining options, and click on "Create GPU Droplet" when done.
+
+### HUGS Inference on DO GPU Droplets
+
+Once the HUGS LLM has been deployed in a DO GPU Droplet, you can either connect to it via the public IP exposed by the instance, or just connect to it via the Web Console.
+
+![HUGS on DigitalOcean GPU Droplet](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/hugs/digital-ocean/hugs-gpu-droplet.png)
+
+When connected to the HUGS Droplet, the initial SSH message will display a Bearer Token, which is required to send requests to the public IP of the deployed HUGS Droplet.
+
+Then you can send requests to the Messages API via either `localhost` if connected within the HUGS Droplet, or via its public IP.
+
+<Tip>
+
+In the inference examples in the guide below, the host is assumed to be `localhost`, which is the case when deploying HUGS via GPU Droplet and connecting to the running instance via SSH. If you prefer to use the public IP instead, then you should update that in the examples provided below.
+
+</Tip>
+
+Refer to [Run Inference on HUGS](../../guides/inference) to see how to run inference on HUGS, but note that in this case you will need to use the Bearer Token provided, so find below the updated examples as in the guide, but using the Bearer Token to send the requests to the Messages API of the deployed HUGS Droplet (assuming that the Bearer Token is stored in the environment variable `export BEARER_TOKEN`).
+
+#### cURL
+
+Using `cURL` is pretty straight forward to [install](https://curl.se/docs/install.html) and use.
+
+```bash
+curl http://localhost:8080/v1/chat/completions \
+    -X POST \
+    -d '{"messages":[{"role":"user","content":"What is Deep Learning?"}],"temperature":0.7,"top_p":0.95,"max_tokens":128}}' \
+    -H 'Content-Type: application/json' \
+    -H "Authorization: Bearer $BEARER_TOKEN"
+```
+
+#### Python
+
+As already mentioned, you can either use the `huggingface_hub.InferenceClient` from the `huggingface_hub` Python SDK (recommended), the `openai` Python SDK, or any SDK with an OpenAI-compatible interface that can consume the Messages API.
+
+##### `huggingface_hub`
+
+You can install it via pip as `pip install --upgrade --quiet huggingface_hub`, and then run the following snippet to mimic the `cURL` commands above i.e. sending requests to the Messages API:
+
+```python
+import os
+from huggingface_hub import InferenceClient
+
+client = InferenceClient(base_url="http://localhost:8080", api_key=os.getenv("BEARER_TOKEN"))
+
+chat_completion = client.chat.completions.create(
+    messages=[
+        {"role":"user","content":"What is Deep Learning?"},
+    ],
+    temperature=0.7,
+    top_p=0.95,
+    max_tokens=128,
+)
+```
+
+Read more about the [`huggingface_hub.InferenceClient.chat_completion` method](https://huggingface.co/docs/huggingface_hub/en/package_reference/inference_client#huggingface_hub.AsyncInferenceClient.chat_completion).
+
+##### `openai`
+
+Alternatively, you can also use the Messages API via `openai`; you can install it via `pip as pip install --upgrade openai`, and then run:
+
+```python
+import os
+from openai import OpenAI
+
+client = OpenAI(base_url="http://localhost:8080/v1/", api_key=os.getenv("BEARER_TOKEN"))
+
+chat_completion = client.chat.completions.create(
+    model="tgi",
+    messages=[
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "What is Deep Learning?"},
+    ],
+    temperature=0.7,
+    top_p=0.95,
+    max_tokens=128,
+)
+```
+
+### Delete created DO GPU Droplet
+
+Finally, once you are done using the deployed LLM via the GPU Droplet, you can safely delete it to avoid incurring in unnecessary costs via the "Actions" option within the deployed LLM, and then delete it.
