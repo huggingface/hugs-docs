@@ -29,6 +29,8 @@
 - sections:
     - local: guides/inference
       title: Run Inference on HUGS
+    - local: guides/inference-multimodal
+      title: Run Multimodal Inference on HUGS
     - local: guides/migrate
       title: (Soon) Migrate from OpenAI to HUGS
   title: Guides
