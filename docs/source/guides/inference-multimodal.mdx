@@ -1,0 +1,175 @@
+# Run Multimodal Inference on HUGS
+
+This guide explains how to perform multimodal inference (combining text and images) using HUGS. Like standard text inference, multimodal inference is compatible with both the Messages API and various client SDKs.
+
+<Tip>
+Make sure you're using a vision-enabled model that supports multimodal inputs. Not all models can process images.
+</Tip>
+
+## Messages API with Images
+
+The Messages API supports multimodal requests through the same `/v1/chat/completions` endpoint. Images can be included in two ways:
+1. As URLs pointing to images
+2. As base64-encoded image data
+
+### Python Clients
+
+You can use either the `huggingface_hub` Python SDK (recommended) or the `openai` Python SDK to make multimodal requests.
+
+#### `huggingface_hub`
+
+First, install the required package:
+```bash
+pip install --upgrade huggingface_hub
+```
+
+Then you can make requests using either image URLs or local images:
+
+* Using a URL
+```python
+from huggingface_hub import InferenceClient
+import base64
+
+client = InferenceClient(base_url="http://localhost:8080", api_key="-")
+
+# Using a URL
+image_url = "https://cdn.britannica.com/61/93061-050-99147DCE/Statue-of-Liberty-Island-New-York-Bay.jpg"
+chat_completion = client.chat.completions.create(
+    messages=[
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "Describe this image in detail.",
+                },
+                {
+                    "type": "image_url",
+                    "image_url": {"url": image_url},
+                },
+            ],
+        },
+    ],
+    temperature=0.7,
+    max_tokens=128,
+)
+print(chat_completion.choices[0].message.content)
+```
+
+* Using a local image (base64 encoded)
+
+```python
+image_path = "/path/to/image.jpeg"
+with open(image_path, "rb") as f:
+    base64_image = base64.b64encode(f.read()).decode("utf-8")
+image_url = f"data:image/jpeg;base64,{base64_image}"
+
+chat_completion = client.chat.completions.create(
+    messages=[
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "Describe this image in detail.",
+                },
+                {
+                    "type": "image_url",
+                    "image_url": {"url": image_url},
+                },
+            ],
+        },
+    ],
+    temperature=0.7,
+    max_tokens=128,
+)
+print(chat_completion.choices[0].message.content)
+```
+
+#### `openai`
+
+Install the OpenAI package:
+```bash
+pip install --upgrade openai
+```
+
+Then use it similarly to the HuggingFace client:
+
+```python
+from openai import OpenAI
+import base64
+
+client = OpenAI(base_url="http://localhost:8080/v1/", api_key="-")
+
+# Using a URL or base64-encoded image
+image_url = "https://cdn.britannica.com/61/93061-050-99147DCE/Statue-of-Liberty-Island-New-York-Bay.jpg"  # or your base64 data URL
+chat_completion = client.chat.completions.create(
+    model="your-model",
+    messages=[
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "Describe this image in detail.",
+                },
+                {
+                    "type": "image_url",
+                    "image_url": {"url": image_url},
+                },
+            ],
+        },
+    ],
+    temperature=0.7,
+    max_tokens=128,
+)
+print(chat_completion.choices[0].message.content)
+```
+
+### cURL
+
+You can also make multimodal requests using cURL. Here's an example using an image URL:
+
+```bash
+curl http://localhost:8080/v1/chat/completions \
+    -X POST \
+    -d '{
+        "model":"your-model",
+        "messages":[{
+            "role":"user",
+            "content":[
+                {
+                    "type":"text",
+                    "text":"Describe this image."
+                },
+                {
+                    "type":"image_url",
+                    "image_url":{"url":"https://cdn.britannica.com/61/93061-050-99147DCE/Statue-of-Liberty-Island-New-York-Bay.jpg"}
+                }
+            ]
+        }],
+        "temperature":0.7,
+        "max_tokens":128
+    }' \
+    -H 'Content-Type: application/json'
+```
+
+## Supported Image Formats
+
+The following image formats are supported:
+- JPEG/JPG
+- PNG
+- GIF (first frame only)
+- WebP
+
+<Tip>
+When using base64-encoded images, make sure to include the correct MIME type in the data URL (e.g., `data:image/jpeg;base64,` for JPEG images).
+</Tip>
+
+## Best Practices
+
+1. **Image Size**: While there's no strict limit on image dimensions, it's recommended to resize large images before sending them to reduce bandwidth usage and processing time.
+
+2. **Multiple Images**: Some models support multiple images in a single request. Check your specific model's documentation for capabilities and limitations.
+
+3. **Error Handling**: Always implement proper error handling for cases where image loading fails or the model encounters processing issues.
