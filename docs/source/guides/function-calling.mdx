@@ -22,7 +22,12 @@ Function calling is useful for many practical applications, such as:
 
 ## Using Tools (Function Definitions)
 
-The most common way to use function calling is through tool definitions. Here's an example that defines weather-related functions:
+Tools are the primary way to define callable functions for your LLM. Each tool requires:
+- A unique name
+- A clear description
+- A JSON schema defining the expected parameters
+
+Here's an example that defines weather-related functions:
 
 ```python
 from huggingface_hub import InferenceClient
@@ -129,8 +134,94 @@ print(response.choices[0].message.content)
 
 This will return a JSON object that matches your schema, making it easy to parse and use in your application.
 
+## Advanced Usage Patterns
+
+### Chaining Function Calls
+LLMs can orchestrate multiple function calls to complete complex tasks:
+
+```python
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "search_products",
+            "description": "Search product catalog",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string"},
+                    "category": {"type": "string", "enum": ["electronics", "clothing", "books"]}
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "create_order",
+            "description": "Create a new order",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "product_id": {"type": "string"},
+                    "quantity": {"type": "integer", "minimum": 1}
+                }
+            }
+        }
+    }
+]
+```
+
+### Error Handling and Execution
+
+Always validate function calls before execution:
+
+```python
+import json
+
+def get_n_day_weather_forecast(location, format, num_days):
+    return '{"temperature": 70, "condition": "sunny"}'
+
+def handle_tool_call(tool_call):
+    try:
+        args = tool_call.function.arguments
+        # Validate required parameters
+        if tool_call.function.name == "get_n_day_weather_forecast":
+            if not all(k in args for k in ["location", "format", "num_days"]):
+                raise ValueError("Missing required parameters")
+            # Only pass arguments that match the function's parameters
+            valid_args = {k: v for k, v in args.items() 
+                         if k in get_n_day_weather_forecast.__code__.co_varnames}
+            return get_n_day_weather_forecast(**valid_args)
+    except json.JSONDecodeError:
+        return {"error": "Invalid function arguments"}
+    except Exception as e:
+        return {"error": str(e)}
+
+res = handle_tool_call(response.choices[0].message.tool_calls[0])
+print(res)
+# {"temperature": 70, "condition": "sunny"}
+```
+
+## Best Practices
+
+1. **Function Design**
+   - Keep function names clear and specific
+   - Use detailed descriptions for functions and parameters
+   - Include parameter constraints (min/max values, enums, etc.)
+
+2. **Error Handling**
+   - Validate all function inputs
+   - Implement proper error handling for failed function calls
+   - Consider retry logic for transient failures
+
+3. **Security**
+   - Validate and sanitize all inputs before execution
+   - Implement rate limiting and access controls
+   - Consider function call permissions based on user context
+
 <Tip>
-Function calling is an advanced feature that requires specific model support. Before implementing function calling, verify that your deployed model supports this capability.
+Never expose sensitive operations directly through function calls. Always implement proper validation and authorization checks.
 </Tip>
 
 For more information about basic inference capabilities, see our [Inference Guide](./inference). 
