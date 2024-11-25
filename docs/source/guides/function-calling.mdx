@@ -1,0 +1,227 @@
+# Function Calling
+
+Function calling is a powerful capability that enables Large Language Models (LLMs) to interact with your code and external systems in a structured way. Instead of just generating text responses, LLMs can understand when to call specific functions and provide the necessary parameters to execute real-world actions.
+
+## How Function Calling Works
+
+The process follows these steps:
+
+![Function Calling](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/hugs/function-callin.png)
+
+This cycle can continue as needed, allowing for complex multi-step interactions between the application and the LLM.
+
+## Example Use Cases
+
+Function calling is useful for many practical applications, such as:
+
+1. Data Retrieval: Converting natural language queries into API calls to fetch data (e.g., "Show me my recent orders" triggers a database query)
+2. Action Execution: Transforming user requests into specific function calls (e.g., "Schedule a meeting" becomes a calendar API call)
+3. Computation Tasks: Handling mathematical or logical operations through dedicated functions (e.g., calculating compound interest or statistical analysis)
+4. Data Processing Pipelines: Chaining multiple function calls together (e.g., fetching data → parsing → transformation → storage)
+5. UI/UX Integration: Triggering interface updates based on user interactions (e.g., updating map markers or displaying charts)
+
+## Using Tools (Function Definitions)
+
+Tools are the primary way to define callable functions for your LLM. Each tool requires:
+- A unique name
+- A clear description
+- A JSON schema defining the expected parameters
+
+Here's an example that defines weather-related functions:
+
+```python
+from huggingface_hub import InferenceClient
+
+client = InferenceClient("http://localhost:8080") # Replace with your HUGS host
+messages = [
+    {
+        "role": "system",
+        "content": "Don't make assumptions about values. Ask for clarification if needed.",
+    },
+    {
+        "role": "user",
+        "content": "What's the weather like the next 3 days in San Francisco, CA?",
+    },
+]
+
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "get_n_day_weather_forecast",
+            "description": "Get an N-day weather forecast",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "location": {
+                        "type": "string",
+                        "description": "The city and state, e.g. San Francisco, CA",
+                    },
+                    "format": {
+                        "type": "string",
+                        "enum": ["celsius", "fahrenheit"],
+                        "description": "The temperature unit to use",
+                    },
+                    "num_days": {
+                        "type": "integer",
+                        "description": "The number of days to forecast",
+                    },
+                },
+                "required": ["location", "format", "num_days"],
+            },
+        },
+    }
+]
+
+response = client.chat_completion(
+    messages=messages,
+    tools=tools,
+    tool_choice="auto",
+    max_tokens=500,
+)
+print(response.choices[0].message.tool_calls[0].function)
+# ChatCompletionOutputFunctionDefinition(arguments={'format': 'celsius', 'location': 'San Francisco, CA', 'num_days': 3}, name='get_n_day_weather_forecast', description=None)
+```
+
+The model will analyze the user's request and generate a structured call to the appropriate function with the correct parameters.
+
+## Using Pydantic Models for structured outputs
+
+For better type safety and validation, you can use Pydantic models to define your function schemas. This approach provides:
+- Runtime type checking
+- Automatic validation
+- Better IDE support
+- Clear documentation through Python types
+
+Here's how to use Pydantic models for function calling:
+
+```python
+from pydantic import BaseModel, Field
+from typing import List
+
+
+class ParkObservation(BaseModel):
+    location: str = Field(..., description="Where the observation took place")
+    activity: str = Field(..., description="What activity was being done")
+    animals_seen: int = Field(..., description="Number of animals spotted", ge=1, le=5)
+    animals: List[str] = Field(..., description="List of animals observed")
+
+
+client = InferenceClient("http://localhost:8080")  # Replace with your HUGS host
+response_format = {"type": "json", "value": ParkObservation.model_json_schema()}
+
+
+messages = [
+    {
+        "role": "user",
+        "content": "I saw a puppy, a cat and a raccoon during my bike ride in the park.",
+    },
+]
+
+
+response = client.chat_completion(
+    messages=messages,
+    response_format=response_format,
+    max_tokens=500,
+)
+print(response.choices[0].message.content)
+# {   "activity": "bike ride",
+#     "animals": ["puppy", "cat", "raccoon"],
+#     "animals_seen": 3,
+#     "location": "the park"
+# }
+```
+
+This will return a JSON object that matches your schema, making it easy to parse and use in your application.
+
+## Advanced Usage Patterns
+
+### Chaining Function Calls
+LLMs can orchestrate multiple function calls to complete complex tasks:
+
+```python
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "search_products",
+            "description": "Search product catalog",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string"},
+                    "category": {"type": "string", "enum": ["electronics", "clothing", "books"]}
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "create_order",
+            "description": "Create a new order",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "product_id": {"type": "string"},
+                    "quantity": {"type": "integer", "minimum": 1}
+                }
+            }
+        }
+    }
+]
+```
+
+### Error Handling and Execution
+
+Always validate function calls before execution:
+
+```python
+import json
+
+def get_n_day_weather_forecast(location, format, num_days):
+    return '{"temperature": 70, "condition": "sunny"}'
+
+def handle_tool_call(tool_call):
+    try:
+        args = tool_call.function.arguments
+        # Validate required parameters
+        if tool_call.function.name == "get_n_day_weather_forecast":
+            if not all(k in args for k in ["location", "format", "num_days"]):
+                raise ValueError("Missing required parameters")
+            # Only pass arguments that match the function's parameters
+            valid_args = {k: v for k, v in args.items() 
+                         if k in get_n_day_weather_forecast.__code__.co_varnames}
+            return get_n_day_weather_forecast(**valid_args)
+    except json.JSONDecodeError:
+        return {"error": "Invalid function arguments"}
+    except Exception as e:
+        return {"error": str(e)}
+
+res = handle_tool_call(response.choices[0].message.tool_calls[0])
+print(res)
+# {"temperature": 70, "condition": "sunny"}
+```
+
+## Best Practices
+
+1. **Function Design**
+   - Keep function names clear and specific
+   - Use detailed descriptions for functions and parameters
+   - Include parameter constraints (min/max values, enums, etc.)
+
+2. **Error Handling**
+   - Validate all function inputs
+   - Implement proper error handling for failed function calls
+   - Consider retry logic for transient failures
+
+3. **Security**
+   - Validate and sanitize all inputs before execution
+   - Implement rate limiting and access controls
+   - Consider function call permissions based on user context
+
+<Tip>
+Never expose sensitive operations directly through function calls. Always implement proper validation and authorization checks.
+</Tip>
+
+For more information about basic inference capabilities, see our [Inference Guide](./inference). 
