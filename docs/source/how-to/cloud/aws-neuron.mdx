@@ -334,7 +334,16 @@ In the inference examples in the guide below, the host is assumed to be `localho
 
 </Tip>
 
-Refer to [Run Inference on HUGS](../../guides/inference) to see how to run inference on HUGS.
+To run inference on HUGS once deployed, you can start with a simple `cURL` command to send a request to the OpenAI API-compatible endpoint exposed by HUGS as follows:
+
+```bash
+curl http://localhost:8080/v1/chat/completions \
+    -X POST \
+    -d '{"model":"tgi","messages":[{"role":"user","content":"What is Deep Learning?"}],"temperature":0.7,"top_p":0.95,"max_tokens":128}}' \
+    -H 'Content-Type: application/json'
+```
+
+For more information and different alternatives on running inference on HUGS, you should refer to the guide [Run Inference on HUGS](../../guides/inference).
 
 ### Uninstall HUGS
 
