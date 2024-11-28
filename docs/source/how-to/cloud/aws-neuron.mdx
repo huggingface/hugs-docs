@@ -133,10 +133,11 @@ iam:
 # Defines the managed node group for the cluster
 managedNodeGroups:
   - name: $NODE_GROUP_NAME
-    instanceType: inf2.48xlarge # GPU-enabled instance type, required by HUGS
+    instanceType: inf2.48xlarge # Inf2-enabled instance type, required by HUGS
     minSize: 1
     maxSize: 2 # Set to a greater number if you want to enable auto-scaling
-    desiredCapacity: 1 # Fixed size node group, can be adjusted for scaling    volumeSize: 500
+    desiredCapacity: 1 # Fixed size node group, can be adjusted for scaling
+    volumeSize: 500
     ami: $AMI_ID
     amiFamily: AmazonLinux2
     iam:
@@ -230,7 +231,7 @@ export IMAGE_REPOSITORY="hugging-face"
 export IMAGE_NAME="neuron-meta-llama-meta-llama-3.1-8b-instruct"
 ```
 
-In this case, we used the `neuron-meta-llama-meta-llama-3.1-8b-instruct` model, but you could select / use any of the available models listed in the introduction of this guide, or you can just explore all the AWS Neuron-compatible models in [Supported Models](../../models.mdx).
+In this case, we used the `neuron-meta-llama-meta-llama-3.1-8b-instruct` model, but you could select / use any of the available models listed in the introduction of this guide, or you can just explore all the AWS Neuron-compatible models in [Supported Models](../../models).
 
 Then you can install the Helm template with any of the following approaches:
 
@@ -333,7 +334,16 @@ In the inference examples in the guide below, the host is assumed to be `localho
 
 </Tip>
 
-Refer to [Run Inference on HUGS](../../guides/inference) to see how to run inference on HUGS.
+To run inference on HUGS once deployed, you can start with a simple `cURL` command to send a request to the OpenAI API-compatible endpoint exposed by HUGS as follows:
+
+```bash
+curl http://localhost:8080/v1/chat/completions \
+    -X POST \
+    -d '{"model":"tgi","messages":[{"role":"user","content":"What is Deep Learning?"}],"temperature":0.7,"top_p":0.95,"max_tokens":128}}' \
+    -H 'Content-Type: application/json'
+```
+
+For more information and different alternatives on running inference on HUGS, you should refer to the guide [Run Inference on HUGS](../../guides/inference).
 
 ### Uninstall HUGS
 
