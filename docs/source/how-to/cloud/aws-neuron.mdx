@@ -133,10 +133,11 @@ iam:
 # Defines the managed node group for the cluster
 managedNodeGroups:
   - name: $NODE_GROUP_NAME
-    instanceType: inf2.48xlarge # GPU-enabled instance type, required by HUGS
+    instanceType: inf2.48xlarge # Inf2-enabled instance type, required by HUGS
     minSize: 1
     maxSize: 2 # Set to a greater number if you want to enable auto-scaling
-    desiredCapacity: 1 # Fixed size node group, can be adjusted for scaling    volumeSize: 500
+    desiredCapacity: 1 # Fixed size node group, can be adjusted for scaling
+    volumeSize: 500
     ami: $AMI_ID
     amiFamily: AmazonLinux2
     iam:
