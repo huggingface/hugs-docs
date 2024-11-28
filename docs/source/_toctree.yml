@@ -18,7 +18,9 @@
     - local: how-to/kubernetes
       title: HUGS with Kubernetes
     - local: how-to/cloud/aws
-      title: HUGS on AWS
+      title: HUGS on AWS with NVIDIA GPUs
+    - local: how-to/cloud/aws-inf2
+      title: HUGS on AWS with Inferentia & Trainium
     - local: how-to/cloud/digital-ocean
       title: HUGS on DigitalOcean
     - local: how-to/cloud/gcp
