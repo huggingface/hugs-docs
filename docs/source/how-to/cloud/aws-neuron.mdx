@@ -1,0 +1,356 @@
+# HUGS on AWS with Inferentia & Trainium
+
+The Hugging Face Generative AI Services, also known as HUGS, can be deployed in Amazon Web Services (AWS) via the AWS Marketplace offering.
+
+This collaboration brings Hugging Face's extensive library of pre-trained models and their Text Generation Inference (TGI) solution to AWS customers, enabling seamless integration of state-of-the-art Large Language Models (LLMs) within the AWS infrastructure.
+
+HUGS provides access to a hand-picked and manually benchmarked collection of the most performant and latest open LLMs hosted in the Hugging Face Hub to TGI-optimized container applications, allowing users to deploy third-party Kubernetes applications on AWS or on-premises environments.
+
+With HUGS, developers can easily find, subscribe to, and deploy Hugging Face models using AWS infrastructure, leveraging the power of AWS Neuron Inferentia2 on optimized, zero-configuration TGI containers.
+
+HUGS provides the following AWS Neuron-compatible models within the HUGS 0.2.0 release (find below the Hugging Face Model ID and their HUGS `IMAGE_NAME`):
+
+- [meta-llama/Meta-Llama-3.1-8B-Instruct](https://huggingface.co/meta-llama/Meta-Llama-3.1-8B-Instruct): `neuron-meta-llama-meta-llama-3.1-8b-instruct`
+- [meta-llama/Meta-Llama-3.1-70B-Instruct](https://huggingface.co/meta-llama/Meta-Llama-3.1-70B-Instruct): `neuron-meta-llama-meta-llama-3.1-70b-instruct`
+- [NousResearch/Hermes-3-Llama-3.1-8B](https://huggingface.co/NousResearch/Hermes-3-Llama-3.1-8B): `neuron-nousresearch-hermes-3-llama-3.1-8b`
+- [NousResearch/Hermes-3-Llama-3.1-70B](https://huggingface.co/NousResearch/Hermes-3-Llama-3.1-70B): `neuron-nousresearch-hermes-3-llama-3.1-70b`
+- [NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO](https://huggingface.co/NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO): `neuron-nousresearch-nous-hermes-2-mixtral-8x7b-dpo`
+- [mistralai/Mixtral-8x7B-Instruct-v0.1](https://huggingface.co/mistralai/Mixtral-8x7B-Instruct-v0.1): `neuron-mistralai-mixtral-8x7b-instruct-v0.1`
+- [mistralai/Mistral-7B-Instruct-v0.3](https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.3): `neuron-mistralai-mistral-7b-instruct-v0.3`
+- [mistralai/Mixtral-8x22B-Instruct-v0.1](https://huggingface.co/mistralai/Mixtral-8x22B-Instruct-v0.1): `neuron-mistralai-mixtral-8x22b-instruct-v0.1`
+
+You can find all the models supported on HUGS in [Supported Models](../../models.mdx).
+
+## Subscribe to HUGS on AWS Marketplace
+
+1. Go to [HUGS AWS Marketplace listing](https://aws.amazon.com/marketplace/pp/prodview-bqy5zfvz3wox6)
+
+   ![HUGS on AWS Marketplace](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/hugs/aws/hugs-marketplace-listing.png)
+
+2. Subscribe to the product in AWS Marketplace by following the instructions on the page. At the time of writing (December 2024), the steps are to:
+
+   1. Click `Continue to Subscribe`, then go to the next page.
+   2. Click `Continue to Configuration`, then go to the next page.
+   3. Select the fulfillment option e.g. `HUGS v2 for NVIDIA GPUs and AWS Inferentia2`, and the software version e.g. `0.2.0`. Note that AWS Neuron Inferentia2 support has been included from 0.2.0 onwards.
+
+   ![HUGS Configuration on AWS Marketplace](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/hugs/aws/hugs-configuration.png)
+
+3. Then click `Continue to Launch`. You successfully subscribe to HUGS. You can now follow the steps below to deploy your preferred HUGS container and model using Amazon EKS, with the provided container URIs.
+
+<Tip>
+
+To know whether you are subscribed or not, you can either see if a blue modal appears on top of the product page with a text saying "You have access to this product", meaning that either you or someone else from your organization has already requested access for your account; otherwise, you can go to the AWS Marketplace service in the AWS Console and search for "HUGS (HUgging Face Generative AI Services)" is listed among your subscribed products.
+
+</Tip>
+
+## Deploy HUGS on Amazon EKS
+
+This example showcases how to create a Kubernetes Cluster on Amazon EKS, how to create an Inferentia2 node group with the necessary permissions and compute requirements, and how to deploy HUGS on Amazon EKS running on Inferentia2 using a Helm template.
+
+<Tip>
+
+This example assumes that you have an AWS Account, that you have [installed and setup the AWS CLI](https://docs.aws.amazon.com/eks/latest/userguide/install-awscli.html), and that you are logged in into your account with the necessary permissions to subscribe to offerings in the AWS Marketplace, and create and manage IAM permissions and resources such as Elastic Kubernetes Service (EKS), Elastic Container Service (ECS), and EC2.
+
+</Tip>
+
+### Requirements
+
+Before proceeding, you need to have installed both `kubectl`, `eksctl`, and `helm`, to interact with the Kubernetes Cluster, to create, configure and delete resources on Amazon EKS, and to interact with the Helm templates, respectively.
+
+To install both `kubectl` and `eksctl` you can follow the instructions at [Amazon EKS Documentation - Set up kubectl and eksctl](https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html). Whilst for `helm` you can follow the instructions at [Helm Documentation - Installing Helm](https://helm.sh/docs/intro/install/).
+
+Finally, for convenience the following environment variables will be set:
+
+```bash
+export REGION="us-east-1"
+export NAMESPACE="default"
+export CLUSTER_NAME="hugs-cluster"
+export CLUSTER_VERSION="1.30"
+export NODE_GROUP_NAME="hugs-node-group"
+export SERVICE_ACCOUNT_NAME="hugs-service-account"
+export DEPLOYMENT_NAME="hugs"
+export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+export AMI_ID=$(aws ssm get-parameter --name /aws/service/eks/optimized-ami/$CLUSTER_VERSION/amazon-linux-2-gpu/recommended/image_id --region $REGION --query "Parameter.Value" --output text)
+```
+
+<Tip>
+
+If your AWS Account has multiple profiles remember to set the `AWS_PROFILE` environment variable to your profile so that the EKS commands use the correct profile.
+
+</Tip>
+
+Optionally, before creating the cluster you may need to create the IAM Policy required to enable the AWS LoadBalancer Controller i.e. `AWSLoadBalancerControllerIAMPolicy`, so as to deploy the ingress which requires the AWS LoadBalancer Controller to be enabled, as per [Install AWS Load Balancer Controller with Helm - Step 1: Create IAM Role using eksctl](https://docs.aws.amazon.com/eks/latest/userguide/lbc-helm.html#lbc-helm-iam).
+
+```bash
+curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/install/iam_policy.json
+aws iam create-policy \
+    --policy-name AWSLoadBalancerControllerIAMPolicy \
+    --policy-document file://iam_policy.json
+```
+
+<Tip>
+
+Note that the policy just needs to be created once per account, meaning that if it's already created then you can reuse the existing one. Otherwise, you can alternatively create the policy under a different name, but along this example the policy is assumed to be named `AWSLoadBalancerControllerIAMPolicy`.
+
+</Tip>
+
+Finally, note that by default this guide will show you how to create the EKS Cluster with a Nodegroup with an `inf2.xlarge` instance, so please make sure that you have the required EC2 quota to be able to spin up AWS Inferentia2 instances, find more information in [AWS re:Post - Inferentia and Trainium Service Quotas](https://repost.aws/articles/ARgmEMvbR6Re200FQs8rTduA/inferentia-and-trainium-service-quotas).
+
+### Setup Amazon EKS
+
+To create the EKS Cluster, Node Group, and add the necessary IAM permissions, you should run `eksctl` with the provided configuration file `eks-cluster.yaml` that looks like:
+
+```yaml
+# Specifies the API version and kind of the configuration
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+# Defines the basic cluster metadata
+metadata:
+  name: $CLUSTER_NAME # Cluster name, used in various AWS resource names
+  region: $REGION # AWS region where the cluster will be created
+  version: $CLUSTER_VERSION # Kubernetes version to use for the cluster
+
+# IAM configuration for the cluster
+iam:
+  withOIDC: true # Enables IAM roles for service accounts (IRSA) using OIDC
+  serviceAccounts:
+    # Configures a service account for marketplace metering
+    - metadata:
+        name: $SERVICE_ACCOUNT_NAME
+        namespace: $NAMESPACE
+      attachPolicyARNs:
+        - arn:aws:iam::aws:policy/AWSMarketplaceMeteringRegisterUsage
+    # Configures a service account for the AWS Load Balancer Controller (just required
+    # if ingress is enabled within the HUGS Helm Template)
+    - metadata:
+        name: aws-load-balancer-controller
+        namespace: $NAMESPACE
+      attachPolicyARNs:
+        - arn:aws:iam::$AWS_ACCOUNT_ID:policy/AWSLoadBalancerControllerIAMPolicy
+      roleName: AmazonEKSLoadBalancerControllerRole
+
+# Defines the managed node group for the cluster
+managedNodeGroups:
+  - name: $NODE_GROUP_NAME
+    instanceType: inf2.48xlarge # GPU-enabled instance type, required by HUGS
+    minSize: 1
+    maxSize: 2 # Set to a greater number if you want to enable auto-scaling
+    desiredCapacity: 1 # Fixed size node group, can be adjusted for scaling    volumeSize: 500
+    ami: $AMI_ID
+    amiFamily: AmazonLinux2
+    iam:
+      attachPolicyARNs:
+      - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+      - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+      - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+    overrideBootstrapCommand: |
+      #!/bin/bash
+
+      /etc/eks/bootstrap.sh $CLUSTER_NAME
+
+# Specifies the EKS add-ons to be installed (default ones)
+# All the addons below will be installed within the `kube-system` namespace
+addons:
+  - name: vpc-cni # Amazon VPC CNI plugin for Kubernetes
+  - name: coredns # CoreDNS for Kubernetes DNS services
+  - name: kube-proxy # kube-proxy for Kubernetes network proxy
+
+# Configures CloudWatch logging for the cluster
+cloudWatch:
+  clusterLogging:
+    enableTypes: ["*"] # Enables all types of control plane logging
+```
+
+Since the AWS LoadBalancer Controller is optional and required by the Ingress, if you decide not to deploy the Ingress later on, then you should remove the `iam.serviceAccounts` for the `aws-load-balancer-controller` before moving on to the next step i.e. the following content from the file above should be removed:
+
+```yaml
+    # Configures a service account for the AWS Load Balancer Controller (just required
+    # if ingress is enabled within the HUGS Helm Template)
+    - metadata:
+        name: aws-load-balancer-controller
+        namespace: $NAMESPACE
+      attachPolicyARNs:
+        - arn:aws:iam::$AWS_ACCOUNT_ID:policy/AWSLoadBalancerControllerIAMPolicy
+      roleName: AmazonEKSLoadBalancerControllerRole
+```
+
+Then you need to run the following command, that will replace the values set in the environment variables above within the [`eks-cluster.yaml`](https://github.com/huggingface/hugs-helm-chart/blob/main/aws/eks-cluster.yaml) file provided in [`huggingface/hugs-helm-chart`](https://github.com/huggingface/hugs-helm-chart). To replace the environment variable values within the `eks-cluster.yaml` file above, [`envsubst`](https://linux.die.net/man/1/envsubst) will be used, which may not be available for Windows users.
+
+```bash
+envsubst < eks-cluster.yaml > cluster.yaml
+```
+
+Once the `cluster.yaml` file has been updated, then you can just run the following command:
+
+```bash
+eksctl create cluster --config-file cluster.yaml
+```
+
+Optionally, if you want to enable or use the AWS LoadBalancer Controller, you will need to deploy that separately before deploying HUGS, in order to enable the Ingress; otherwise, feel free to jump into the HUGS deployment section below.
+
+```bash
+helm repo add eks https://aws.github.io/eks-charts
+helm repo update eks
+helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
+    --namespace $NAMESPACE \
+    --set clusterName=$CLUSTER_NAME \
+    --set serviceAccount.create=false \
+    --set serviceAccount.name=aws-load-balancer-controller
+```
+
+<Tip>
+
+If you decided to deploy the AWS LoadBalancer Controller and enable the Ingress within the HUGS deployment, then you will need to wait until the ALB controller is running before deploying HUGS, to do so you can use the following `kubectl` command:
+
+```bash
+kubectl wait --namespace $NAMESPACE \
+    --for=condition=ready pod \
+    --selector=app.kubernetes.io/name=aws-load-balancer-controller \
+    --timeout=90s
+```
+
+</Tip>
+
+### Deploy HUGS with Helm on Amazon EKS
+
+Finally, you can install the Helm template to deploy HUGS from [`huggingface/hugs-helm-chart`](https://github.com/huggingface/hugs-helm-chart) as it follows:
+
+```bash
+helm repo add hugs https://raw.githubusercontent.com/huggingface/hugs-helm-chart/0.0.4/charts/hugs
+helm repo update hugs
+```
+
+Once installed, to deploy the HUGS container for a given model, e.g. `neuron-meta-llama-meta-llama-3.1-8b-instruct`, you need visit the AWS Marketplace Offering for HUGS in the "Launch this Software" tab after Subscribing to it and Configuring it, there you will see all the available `CONTAINER_URI`s. In this case, since we want to showcase how to deploy an LLM on AWS Inferentia2, you will need to select any container URI starting with `neuron-...`, as those are the ones compatible with AWS Neuron Devices e.g. `XXXXXXXXXXXX.dkr.ecr.us-east-1.amazonaws.com/hugging-face/neuron-meta-llama-meta-llama-3.1-8b-instruct`, and then just export the following environment variables:
+
+```bash
+export IMAGE_REGISTRY="XXXXXXXXXXXX.dkr.ecr.us-east-1.amazonaws.com"
+export IMAGE_REPOSITORY="hugging-face"
+export IMAGE_NAME="neuron-meta-llama-meta-llama-3.1-8b-instruct"
+```
+
+In this case, we used the `neuron-meta-llama-meta-llama-3.1-8b-instruct` model, but you could select / use any of the available models listed in the introduction of this guide, or you can just explore all the AWS Neuron-compatible models in [Supported Models](../../models.mdx).
+
+Then you can install the Helm template with any of the following approaches:
+
+- (Recommended) Via a custom `values.yaml` file:
+
+    You should first create the `values.yaml` file that's compliant with the [`huggingface/hugs-helm-chart`](https://github.com/huggingface/hugs-helm-chart) values, and then update the ones related to AWS Inferentia2:
+
+    ```yaml
+    image:
+      registry: $IMAGE_REGISTRY # Add your custom HUGS Registry here
+      repository: $IMAGE_REPOSITORY # For AWS should always be "hugging-face"
+      name: $IMAGE_NAME
+      tag: latest
+
+    serviceAccountName: $SERVICE_ACCOUNT_NAME
+
+    securityContext:
+      privileged: true
+
+    ingress:
+      enabled: true
+      className: alb
+      annotations:
+        alb.ingress.kubernetes.io/scheme: internet-facing
+      hosts:
+        - host: ""
+          paths:
+            - path: /
+              pathType: Prefix
+
+    resources:
+      requests:
+        aws.amazon.com/neuron: 1
+      limits:
+        aws.amazon.com/neuron: 1
+
+    nodeSelector:
+      eks.amazonaws.com/nodegroup: $NODE_GROUP_NAME
+    ```
+
+    The `values.yaml` file created above just contains the required values related to our specific configuration and to AWS Inferentia2 and AWS EKS restrictions specifically. Then we need to replace the variables defined above with `envsubst` as we did before, pulling the values from the environment values defined in the beginning of the tutorial:
+
+    ```bash
+    envsubst < values.yaml > values-replaced.yaml
+    ```
+
+    Finally, just install the file with the replacements `values-replaced.yaml` with `helm install` as:
+
+    ```bash
+    helm install -f values-replaced.yaml $DEPLOYMENT_NAME hugs/hugs
+    ```
+
+    <Tip>
+
+    For testing that the replacements are correct and checking what the Helm Template will create, you can always call the exact same command but instead of `helm install` use `helm template` and check the produced / generated Kubernetes Manifest files to be applied in the EKS Cluster.
+
+    ```bash
+    helm template -f values-replaced.yaml $DEPLOYMENT_NAME hugs/hugs
+    ```
+
+    </Tip>
+
+- Via the `--set` option when running `helm install`:
+
+    ```bash
+    helm install $DEPLOYMENT_NAME hugs/hugs \
+        --set image.registry=$IMAGE_REGISTRY \
+        --set image.repository=$IMAGE_REPOSITORY \
+        --set image.name=$IMAGE_NAME \
+        --set image.tag="0.2.0" \
+        --set resources.requests."aws\.amazon\.com/neuron"=1 \
+        --set resources.limits."aws\.amazon\.com/neuron"=1 \
+        --set serviceAccountName=$SERVICE_ACCOUNT_NAME \
+        --set nodeSelector."eks\.amazonaws\.com/nodegroup"=$NODE_GROUP_NAME
+    ```
+
+    Note that for nested values or complex ones, using the CLI arguments may get a bit tricky, specially with character escaping.
+
+### Inference on HUGS
+
+To run the inference over the deployed HUGS service, you can either:
+
+- Forward the port via port-forwarding to a local port as e.g. 8080 (so that you can send requests to the service via `localhost`) with the command:
+
+  ```bash
+  kubectl port-forward service/$DEPLOYMENT_NAME 8080:80
+  ```
+
+- Use the external IP or hostname of the ingress, only if the AWS LoadBalancer Controller was deployed into the EKS Cluster and `ingress.enabled: true` was set in the `values.yaml` file in the Helm Template with the correct `alb` configuration, that can be retrieved with the following command:
+
+  ```bash
+  kubectl get ingress $DEPLOYMENT_NAME -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+  ```
+
+Then you can send requests to the Messages API via either `localhost`, the ingress IP or the ingress hostname, from outside the running pod.
+
+<Tip>
+
+In the inference examples in the guide below, the host is assumed to be `localhost` which is the case when deploying HUGS via Kubernetes with port-forwarding. If you have deployed HUGS on Kubernetes using an ingress under a specific IP, host, and/or with SSL (HTTPS), note that you should update the `localhost` references below with your host or IP.
+
+</Tip>
+
+Refer to [Run Inference on HUGS](../../guides/inference) to see how to run inference on HUGS.
+
+### Uninstall HUGS
+
+Since HUGS was installed via `helm install` you can simply uninstall it as:
+
+```bash
+helm uninstall $DEPLOYMENT_NAME
+```
+
+And `helm uninstall` will remove all the workloads created, in this case being the Deployment, the Service, the Ingress, and the Horizontal Pod Autoscaler (HPA); alternatively, if you also installed the AWS LoadBalancer Controller, you can also uninstall it as follows:
+
+```bash
+helm uninstall aws-load-balancer-controller
+```
+
+Alternatively, once you are done using Amazon EKS Cluster, you can safely delete it to avoid incurring in unnecessary costs as:
+
+```bash
+eksctl delete cluster --name=$CLUSTER_NAME --region=$REGION
+```
