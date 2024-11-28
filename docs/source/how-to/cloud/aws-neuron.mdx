@@ -8,6 +8,19 @@ HUGS provides access to a hand-picked and manually benchmarked collection of the
 
 With HUGS, developers can easily find, subscribe to, and deploy Hugging Face models using AWS infrastructure, leveraging the power of AWS Neuron Inferentia2 on optimized, zero-configuration TGI containers.
 
+HUGS provides the following AWS Neuron-compatible models within the HUGS 0.2.0 release (find below the Hugging Face Hub identifiers and their image name within the HUGS Container URIs available the offering):
+
+- Hub ID [meta-llama/Meta-Llama-3.1-8B-Instruct](https://huggingface.co/meta-llama/Meta-Llama-3.1-8B-Instruct) with image name `neuron-meta-llama-meta-llama-3.1-8b-instruct`
+- Hub ID [meta-llama/Meta-Llama-3.1-70B-Instruct](https://huggingface.co/meta-llama/Meta-Llama-3.1-70B-Instruct) with image name `neuron-meta-llama-meta-llama-3.1-70b-instruct`
+- Hub ID [NousResearch/Hermes-3-Llama-3.1-8B](https://huggingface.co/NousResearch/Hermes-3-Llama-3.1-8B) with image name `neuron-nousresearch-hermes-3-llama-3.1-8b`
+- Hub ID [NousResearch/Hermes-3-Llama-3.1-70B](https://huggingface.co/NousResearch/Hermes-3-Llama-3.1-70B) with image name `neuron-nousresearch-hermes-3-llama-3.1-70b`
+- Hub ID [NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO](https://huggingface.co/NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO) with image name `neuron-nousresearch-nous-hermes-2-mixtral-8x7b-dpo`
+- Hub ID [mistralai/Mixtral-8x7B-Instruct-v0.1](https://huggingface.co/mistralai/Mixtral-8x7B-Instruct-v0.1) with image name `neuron-mistralai-mixtral-8x7b-instruct-v0.1`
+- Hub ID [mistralai/Mistral-7B-Instruct-v0.3](https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.3) with image name `neuron-mistralai-mistral-7b-instruct-v0.3`
+- Hub ID [mistralai/Mixtral-8x22B-Instruct-v0.1](https://huggingface.co/mistralai/Mixtral-8x22B-Instruct-v0.1) with image name `neuron-mistralai-mixtral-8x22b-instruct-v0.1`
+
+You can find all the models supported on HUGS in [Supported Models](../../models.mdx).
+
 ## Subscribe to HUGS on AWS Marketplace
 
 1. Go to [HUGS AWS Marketplace listing](https://aws.amazon.com/marketplace/pp/prodview-bqy5zfvz3wox6)
@@ -20,7 +33,7 @@ With HUGS, developers can easily find, subscribe to, and deploy Hugging Face mod
    2. Click `Continue to Configuration`, then go to the next page.
    3. Select the fulfillment option e.g. `HUGS v2 for NVIDIA GPUs and AWS Inferentia2`, and the software version e.g. `0.2.0`. Note that AWS Neuron Inferentia2 support has been included from 0.2.0 onwards.
 
-   ![HUGS Configuration on AWS Marketplace](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/hugs/aws/hugs-configuration-inf2.png)
+   ![HUGS Configuration on AWS Marketplace](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/hugs/aws/hugs-configuration.png)
 
 3. Then click `Continue to Launch`. You successfully subscribe to HUGS. You can now follow the steps below to deploy your preferred HUGS container and model using Amazon EKS, with the provided container URIs.
 
@@ -150,16 +163,6 @@ cloudWatch:
     enableTypes: ["*"] # Enables all types of control plane logging
 ```
 
-<Tip>
-
-Alternatively, you can download the file from the [`huggingface/hugs-helm-chart`](https://github.com/huggingface/hugs-helm-chart) GitHub repository as follows:
-
-```bash
-curl -O https://raw.githubusercontent.com/huggingface/hugs-helm-chart/main/aws/eks-inf2-cluster.yaml
-```
-
-</Tip>
-
 Since the AWS LoadBalancer Controller is optional and required by the Ingress, if you decide not to deploy the Ingress later on, then you should remove the `iam.serviceAccounts` for the `aws-load-balancer-controller` before moving on to the next step i.e. the following content from the file above should be removed:
 
 ```yaml
@@ -226,6 +229,8 @@ export IMAGE_REGISTRY="XXXXXXXXXXXX.dkr.ecr.us-east-1.amazonaws.com"
 export IMAGE_REPOSITORY="hugging-face"
 export IMAGE_NAME="neuron-meta-llama-meta-llama-3.1-8b-instruct"
 ```
+
+In this case, we used the `neuron-meta-llama-meta-llama-3.1-8b-instruct` model, but you could select / use any of the available models listed in the introduction of this guide, or you can just explore all the AWS Neuron-compatible models in [Supported Models](../../models.mdx).
 
 Then you can install the Helm template with any of the following approaches:
 
