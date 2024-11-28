@@ -14,7 +14,7 @@ docker run -it --rm \
     --shm-size=16GB \
     -v "$HUGS_CACHE:/tmp" \
     -p 8080:80 \
-   'hfhugs/nvidia-google-gemma-2-9b-it'
+   'hfhugs/nvidia-google-gemma-2-9b-it:0.2.0'
 ```
 
 <Tip>
@@ -26,6 +26,46 @@ The container URI might differ depending on the distribution and the model you a
 The command sets the following default environment variables in the container:
 
 - `HUGS_CACHE` defaults to `~/.cache/hugs`. This is the cache for the models, for faster loading next time.
+
+## Run HUGS Container with AWS Inferentia2/Trainium
+
+To run HUGS on AWS instances with Inferentia2 or Trainium accelerators, you'll need to use a compatible Docker image and configure access to the Neuron devices. There are two ways to provide container access to Neuron devices:
+
+1. Using `--privileged` flag (grants access to all Neuron devices)
+2. Using `--device` flags (grants access to specific Neuron devices)
+
+You can run the container with the `--privileged` flag to grant access to all Neuron devices:
+
+```bash
+export HUGS_CACHE=~/.cache/hugs
+mkdir -p "$HUGS_CACHE"
+sudo docker run -it --rm \
+    --shm-size=16GB \
+    --privileged \
+    -v "$HUGS_CACHE:/tmp" \
+    -p 8080:80 \
+    'hfhugs/neuron-meta-llama-meta-llama-3.1-8b-instruct:0.2.0'
+```
+
+Alternatively, you can specify individual Neuron devices using `--device` flags for more fine-grained control:
+
+```bash
+export HUGS_CACHE=~/.cache/hugs
+mkdir -p "$HUGS_CACHE"
+sudo docker run -it --rm \
+    --shm-size=16GB \
+    --device=/dev/neuron0 \
+    --device=/dev/neuron1 \
+    --device=/dev/neuron2 \
+    --device=/dev/neuron3 \
+    -v "$HUGS_CACHE:/tmp" \
+    -p 8080:80 \
+    'hfhugs/neuron-meta-llama-meta-llama-3.1-8b-instruct:0.2.0'
+```
+
+<Tip>
+Using individual `--device` flags provides more fine-grained control over which Neuron devices are accessible to the container, which can be useful when running multiple containers on the same instance.
+</Tip>
 
 ## Sample Docker Compose file
 
